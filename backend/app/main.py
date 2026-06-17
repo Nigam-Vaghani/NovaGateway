@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import health
+from app.routers import health, proxy
 from app.logging_config import setup_logging
 from app.config import settings
 import logging
@@ -23,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(proxy.router)
 
 @app.on_event("startup")
 async def startup_event():

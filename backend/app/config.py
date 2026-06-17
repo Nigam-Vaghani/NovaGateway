@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_WINDOW: int = 60
     HEALTH_CHECK_INTERVAL: int = 30
     LOG_LEVEL: str = "INFO"
+    PROXY_TARGET_URL: str = "http://localhost:8001"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
