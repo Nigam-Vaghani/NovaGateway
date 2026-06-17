@@ -45,6 +45,8 @@ class ProxyService:
         # Prepare body
         body = await request.body()
 
+        request.state.target_backend = target_url
+
         try:
             req = self.client.build_request(
                 method=request.method,
@@ -67,12 +69,15 @@ class ProxyService:
             
         except httpx.ConnectError as e:
             logger.error(f"Connection error to backend {target_url}: {e}")
+            request.state.proxy_error = f"Connection error: {e}"
             return JSONResponse(status_code=502, content={"error": "Bad Gateway", "message": "Connection refused to backend"})
         except httpx.TimeoutException as e:
             logger.error(f"Timeout connecting to backend {target_url}: {e}")
+            request.state.proxy_error = f"Timeout error: {e}"
             return JSONResponse(status_code=504, content={"error": "Gateway Timeout", "message": "Timeout connecting to backend"})
         except Exception as e:
             logger.error(f"Error proxying request to {target_url}: {e}")
+            request.state.proxy_error = f"Internal error: {e}"
             return JSONResponse(status_code=500, content={"error": "Internal Server Error", "message": str(e)})
 
 proxy_service = ProxyService()

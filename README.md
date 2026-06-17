@@ -54,3 +54,25 @@
 
 **The Result:**
 - A fully functional proxy engine that accurately intercepts and routes traffic, preserves parameters, manages client IP headers, and safely handles connection failures.
+
+### Step 3: Request Logging & Persistence
+
+**What we built:**
+- Created a `RequestLog` SQLAlchemy model and corresponding Pydantic schemas.
+- Configured an Alembic migration for the `request_logs` PostgreSQL table.
+- Implemented a `RequestLoggingMiddleware` that captures latency, proxy status, path, method, client IP, and dynamically fetched target backend URLs and errors.
+- Added paginated API endpoints (`GET /admin/logs` and `GET /admin/logs/{id}`) with rich filtering capabilities.
+- Wired the middleware and logs router into the main FastAPI application.
+
+**Why we built it:**
+- A robust API Gateway needs comprehensive observability. Writing logs to a database enables administrative review, monitoring, and future analytics features without blocking the hot path of proxy requests (via async background tasks).
+
+**What we tested:**
+- (Testing Steps)
+  1. Boot up the backend and PostgreSQL via docker-compose (to handle `asyncpg` bindings correctly).
+  2. Run `docker compose exec backend alembic upgrade head` to apply the migrations.
+  3. Send requests through the proxy (e.g., to the `/{path}` endpoint).
+  4. Perform `GET /admin/logs` to observe the captured request metadata (method, latency, error strings on failure).
+
+**The Result:**
+- Every proxied request generates an asynchronous database record containing full observability metadata (latency, success/fail state, size) securely exposed via an admin API.

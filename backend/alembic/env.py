@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import Base
+from app import models
 from app.config import settings
 
 target_metadata = Base.metadata
