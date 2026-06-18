@@ -141,3 +141,40 @@ Health checks run asynchronously every `HEALTH_CHECK_INTERVAL` seconds to automa
 - **Rate Limiting**: Configured globally per IP using Redis.
 - **Security Headers**: HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, etc.
 - **Cookies**: Automatically injects `Secure` and `SameSite=Strict` flags to proxied `Set-Cookie` headers when in HTTPS mode.
+
+## CI/CD Pipeline
+
+The project includes a `Makefile` to simplify CI/CD tasks, which are compatible with GitHub Actions or other CI runners.
+
+### Useful Commands
+- `make dev` - Start development environment using Docker Compose.
+- `make prod` - Start production environment using `docker-compose.prod.yml`.
+- `make test` - Run the test suite with `pytest`.
+- `make lint` - Run code linting with `ruff`.
+- `make migrate` - Apply Alembic migrations.
+- `make down` - Tear down Docker containers.
+
+### Example GitHub Actions Workflow
+
+```yaml
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      - name: Lint
+        run: make lint
+      - name: Test
+        run: make test
+```

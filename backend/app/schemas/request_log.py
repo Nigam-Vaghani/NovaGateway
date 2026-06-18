@@ -28,3 +28,24 @@ class PaginatedRequestLogsResponse(BaseModel):
     total: int
     page: int
     size: int
+
+class RequestsPerMinute(BaseModel):
+    time: str
+    requests: int
+
+class StatusDistribution(BaseModel):
+    name: str
+    value: int
+
+class TopEndpoint(BaseModel):
+    path: str
+    requests: int
+
+class DashboardStatsResponse(BaseModel):
+    totalRequests: int
+    avgLatency: float
+    errorRate: float
+    cacheHitRate: float
+    requestsPerMinute: List[RequestsPerMinute]
+    statusDistribution: List[StatusDistribution]
+    topEndpoints: List[TopEndpoint]

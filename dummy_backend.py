@@ -17,4 +17,4 @@ async def catch_all(request: Request, path: str):
     return {"message": f"Hello from backend running on port {PORT}", "path": path}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=PORT)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

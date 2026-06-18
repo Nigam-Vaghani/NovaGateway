@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "novagateway"
+version = "1.0.0"
+description = "Enterprise Reverse Proxy and API Gateway"
+authors = ["NovaGateway Team"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults (useful for FastAPI Depends)
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --asyncio-mode=auto"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    ".",
+]

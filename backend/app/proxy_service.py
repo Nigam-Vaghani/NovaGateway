@@ -88,7 +88,7 @@ class ProxyService:
                 if key.lower() not in HOP_BY_HOP_HEADERS and key.lower() != "host":
                     headers[key] = value
 
-            # Add X-Forwarded-For
+        # Add X-Forwarded-For
             client_ip = request.client.host if request.client else "127.0.0.1"
             if "x-forwarded-for" in headers:
                 headers["x-forwarded-for"] += f", {client_ip}"
@@ -96,6 +96,19 @@ class ProxyService:
                 headers["x-forwarded-for"] = client_ip
 
             request.state.target_backend = target_url
+
+            from app.cache_service import cache_service
+            cache_key = None
+            if request.method == "GET" and getattr(route, "cache_ttl_seconds", None):
+                cache_key = cache_service.generate_key(request.method, path, request.url.query)
+                cached_data = await cache_service.get_cached(cache_key)
+                if cached_data:
+                    request.state.cache_hit = True
+                    return Response(
+                        content=cached_data,
+                        status_code=200,
+                        headers={"X-Cache": "HIT"}
+                    )
 
             try:
                 req = self.client.build_request(
@@ -115,7 +128,12 @@ class ProxyService:
                             if "SameSite=Strict" not in value and "SameSite" not in value:
                                 value += "; SameSite=Strict"
                         res_headers.append((key, value))
-                        
+                
+                # Check if we should cache
+                if cache_key and response.status_code == 200:
+                    await cache_service.set_cached(cache_key, response.content, route.cache_ttl_seconds)
+                    res_headers.append(("X-Cache", "MISS"))
+                
                 proxy_response = Response(
                     content=response.content,
                     status_code=response.status_code

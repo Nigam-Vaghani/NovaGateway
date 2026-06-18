@@ -14,6 +14,7 @@ class Route(Base):
     strip_prefix = Column(Boolean, default=True)
     require_api_key = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    cache_ttl_seconds = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     backends = relationship("Backend", back_populates="route", cascade="all, delete-orphan")

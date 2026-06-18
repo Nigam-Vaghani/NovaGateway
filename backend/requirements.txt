@@ -7,3 +7,7 @@ asyncpg
 redis
 pydantic-settings
 python-dotenv
+python-json-logger
+pytest
+pytest-asyncio
+pytest-cov

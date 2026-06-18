@@ -1,3 +1,65 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #075985;
+  --color-brand-900: #0c4a6e;
+  
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+
+  --color-bg-base: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-bg-glass: rgba(255, 255, 255, 0.7);
+  
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+  
+  --font-sans: 'Inter', 'Outfit', sans-serif;
+  
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.05);
+  --shadow-neon: 0 0 15px rgba(14, 165, 233, 0.3);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    font-family: var(--font-sans);
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(199, 100%, 85%, 0.4) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(262, 100%, 85%, 0.4) 0px, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: var(--shadow-glass);
+    border-radius: 1rem;
+  }
+  
+  .btn-primary {
+    @apply bg-brand-500 text-white font-semibold py-2 px-4 rounded-lg shadow-neon hover:bg-brand-600 hover:scale-105 transition-all duration-300;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-brand-600 font-semibold py-2 px-4 rounded-lg border border-brand-200 hover:bg-brand-50 hover:scale-105 transition-all duration-300;
+  }
+  
+  .input-futuristic {
+    @apply w-full bg-white/60 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm;
+  }
+}

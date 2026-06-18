@@ -7,11 +7,11 @@ from uuid import UUID
 
 from app.database import get_db
 from app.models.request_log import RequestLog
-from app.schemas.request_log import RequestLogResponse, PaginatedRequestLogsResponse
+from app.schemas.request_log import RequestLogResponse, PaginatedRequestLogsResponse, DashboardStatsResponse
 
 router = APIRouter(prefix="/admin/logs", tags=["Logs"])
 
-@router.get("", response_model=PaginatedRequestLogsResponse)
+@router.get("", response_model=PaginatedRequestLogsResponse, summary="Get Request Logs", description="Retrieve paginated request logs with optional filtering by method, status, path, IP, and time range.")
 async def get_logs(
     method: Optional[str] = Query(None, description="Filter by HTTP method"),
     status_code: Optional[int] = Query(None, description="Filter by status code"),
@@ -57,7 +57,7 @@ async def get_logs(
         size=page_size
     )
 
-@router.get("/{id}", response_model=RequestLogResponse)
+@router.get("/{id}", response_model=RequestLogResponse, summary="Get Log Details", description="Retrieve a specific request log by its UUID.")
 async def get_log(id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(RequestLog).where(RequestLog.id == id))
     log_entry = result.scalar_one_or_none()
@@ -66,3 +66,67 @@ async def get_log(id: UUID, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Log entry not found")
         
     return log_entry
+
+@router.get("/dashboard/stats", response_model=DashboardStatsResponse, summary="Get Dashboard Statistics", description="Retrieve aggregated metrics and statistics for the past 24 hours.")
+async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
+    from datetime import timedelta
+    now = datetime.utcnow()
+    last_24h = now - timedelta(hours=24)
+    last_60m = now - timedelta(minutes=60)
+
+    # Total requests 24h
+    res_total = await db.execute(select(func.count()).where(RequestLog.timestamp >= last_24h))
+    total_24h = res_total.scalar() or 0
+
+    # Avg Latency 24h
+    res_lat = await db.execute(select(func.avg(RequestLog.latency_ms)).where(RequestLog.timestamp >= last_24h))
+    avg_latency = float(res_lat.scalar() or 0)
+
+    # Error Rate 24h (status >= 400)
+    res_err = await db.execute(select(func.count()).where(RequestLog.timestamp >= last_24h, RequestLog.status_code >= 400))
+    errors_24h = res_err.scalar() or 0
+    error_rate = (errors_24h / total_24h * 100) if total_24h > 0 else 0
+
+    # Cache hit rate 24h
+    res_cache = await db.execute(select(func.count()).where(RequestLog.timestamp >= last_24h, RequestLog.cache_hit == True))
+    cache_hits = res_cache.scalar() or 0
+    cache_hit_rate = (cache_hits / total_24h * 100) if total_24h > 0 else 0
+
+    # Requests per minute (last 60m)
+    # Group by minute
+    stmt_rpm = select(
+        func.date_trunc('minute', RequestLog.timestamp).label('minute'),
+        func.count().label('count')
+    ).where(RequestLog.timestamp >= last_60m).group_by('minute').order_by('minute')
+    
+    res_rpm = await db.execute(stmt_rpm)
+    rpm_data = [{"time": row.minute.strftime("%H:%M"), "requests": row.count} for row in res_rpm.all()]
+
+    # Status distribution
+    stmt_status = select(
+        RequestLog.status_code,
+        func.count().label('count')
+    ).where(RequestLog.timestamp >= last_24h).group_by(RequestLog.status_code)
+    
+    res_status = await db.execute(stmt_status)
+    status_data = [{"name": str(row.status_code), "value": row.count} for row in res_status.all()]
+
+    # Top endpoints
+    stmt_top = select(
+        RequestLog.path,
+        func.count().label('count')
+    ).where(RequestLog.timestamp >= last_24h).group_by(RequestLog.path).order_by(func.count().desc()).limit(10)
+    
+    res_top = await db.execute(stmt_top)
+    top_endpoints = [{"path": row.path, "requests": row.count} for row in res_top.all()]
+
+    return {
+        "totalRequests": total_24h,
+        "avgLatency": round(avg_latency, 2),
+        "errorRate": round(error_rate, 2),
+        "cacheHitRate": round(cache_hit_rate, 2),
+        "requestsPerMinute": rpm_data,
+        "statusDistribution": status_data,
+        "topEndpoints": top_endpoints
+    }
+
