@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     PROXY_TARGET_URL: str = "http://localhost:8001"
 
+    MAX_REQUEST_SIZE_MB: int = 10
     MAX_RETRIES: int = 3
     LOAD_BALANCER_STRATEGY: str = "round_robin"
 

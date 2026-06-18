@@ -27,6 +27,7 @@ class RouteBase(BaseModel):
     name: str
     path_prefix: str
     strip_prefix: Optional[bool] = True
+    require_api_key: Optional[bool] = False
     is_active: Optional[bool] = True
 
 class RouteCreate(RouteBase):
@@ -36,6 +37,7 @@ class RouteUpdate(BaseModel):
     name: Optional[str] = None
     path_prefix: Optional[str] = None
     strip_prefix: Optional[bool] = None
+    require_api_key: Optional[bool] = None
     is_active: Optional[bool] = None
 
 class RouteResponse(RouteBase):

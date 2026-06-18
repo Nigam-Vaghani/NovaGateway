@@ -12,6 +12,7 @@ class Route(Base):
     name = Column(String, nullable=False)
     path_prefix = Column(String, nullable=False, unique=True)
     strip_prefix = Column(Boolean, default=True)
+    require_api_key = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 

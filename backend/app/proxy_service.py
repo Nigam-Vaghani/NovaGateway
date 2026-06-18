@@ -35,6 +35,21 @@ class ProxyService:
         if not route.is_active:
             return JSONResponse(status_code=503, content={"error": "Service Unavailable", "message": "Route is disabled"})
             
+        if route.require_api_key:
+            api_key = request.headers.get("X-API-Key")
+            if not api_key:
+                return JSONResponse(status_code=401, content={"error": "Unauthorized", "message": "API key required"})
+            
+            from app.database import AsyncSessionLocal
+            from app.models.security import APIKey
+            from sqlalchemy import select
+            
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(select(APIKey).where(APIKey.key == api_key, APIKey.is_active == True))
+                db_key = result.scalar_one_or_none()
+                if not db_key:
+                    return JSONResponse(status_code=401, content={"error": "Unauthorized", "message": "Invalid or inactive API key"})
+            
         lb = get_load_balancer(settings.LOAD_BALANCER_STRATEGY)
         
         last_error = None
