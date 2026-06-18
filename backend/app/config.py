@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     PROXY_TARGET_URL: str = "http://localhost:8001"
 
+    MAX_RETRIES: int = 3
+    LOAD_BALANCER_STRATEGY: str = "round_robin"
+
     model_config = SettingsConfigDict(env_file="../.env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()

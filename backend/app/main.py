@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import health, proxy, logs
+from app.routers import health, proxy, logs, admin_routing
 from app.middleware.logging import RequestLoggingMiddleware
 from app.logging_config import setup_logging
 from app.config import settings
@@ -27,8 +27,12 @@ app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(health.router)
 app.include_router(logs.router)
+app.include_router(admin_routing.router)
 app.include_router(proxy.router)
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("NovaGateway starting up...")
+    from app.health_checker import health_check_loop
+    import asyncio
+    asyncio.create_task(health_check_loop())
