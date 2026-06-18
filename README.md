@@ -33,39 +33,25 @@
 
 ## 📸 Application Showcase
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>1. 📊 Telemetry Overview</h3>
-      <p>The dashboard provides a real-time matrix of all traffic passing through the gateway. You can monitor the total requests over 24 hours, track average latencies, visualize traffic spikes via the line charts, and check the active status of all backend nodes.</p>
-      <img src="docs/images/dashboard.png" width="100%" alt="Dashboard Showcase"/>
-    </td>
-    <td width="50%" valign="top">
-      <h3>2. 🛣️ Dynamic Routes Management</h3>
-      <p>Easily create, update, and manage your API routes. The gateway intelligently forwards traffic matched by path prefixes to registered downstream backends.</p>
-      <img src="docs/images/routes.png" width="100%" alt="Routes Management"/>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>3. 🖥️ Load Balancing & Backends</h3>
-      <p>Add multiple backend instances (URLs) to a single route and assign them specific traffic weights. The gateway actively monitors these nodes and routes requests accordingly.</p>
-      <img src="docs/images/backends.png" width="100%" alt="Backends Management"/>
-    </td>
-    <td width="50%" valign="top">
-      <h3>4. 📝 Granular Request Logging</h3>
-      <p>Every request that flows through the proxy is intercepted, measured, and securely logged to the PostgreSQL database for deep auditing and troubleshooting.</p>
-      <img src="docs/images/logs.png" width="100%" alt="Request Logs"/>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center" valign="top">
-      <h3>5. 🛡️ Global Security Configurations</h3>
-      <p>Define global gateway policies. Update allowed IP addresses, configure maximum request sizes, and dictate the strictness of your rate limiting algorithms.</p>
-      <img src="docs/images/security.png" width="75%" alt="Security Settings"/>
-    </td>
-  </tr>
-</table>
+### 1. 📊 Telemetry Overview (Dashboard)
+The dashboard provides a real-time matrix of all traffic passing through the gateway. You can monitor the total requests over 24 hours, track average latencies, visualize traffic spikes via the line charts, and check the active status of all backend nodes.
+![Dashboard Showcase](docs/images/dashboard.png)
+
+### 2. 🛣️ Dynamic Routes Management
+Easily create, update, and manage your API routes. The gateway intelligently forwards traffic matched by path prefixes to registered downstream backends.
+![Routes Management](docs/images/routes.png)
+
+### 3. 🖥️ Load Balancing & Backends
+Add multiple backend instances (URLs) to a single route and assign them specific traffic weights. The gateway actively monitors these nodes and routes requests accordingly.
+![Backends Management](docs/images/backends.png)
+
+### 4. 📝 Granular Request Logging
+Every request that flows through the proxy is intercepted, measured, and securely logged to the PostgreSQL database for deep auditing and troubleshooting.
+![Request Logs](docs/images/logs.png)
+
+### 5. 🛡️ Global Security Configurations
+Define global gateway policies. Update allowed IP addresses, configure maximum request sizes, and dictate the strictness of your rate limiting algorithms.
+![Security Settings](docs/images/security.png)
 
 ---
 
