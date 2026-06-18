@@ -1,78 +1,143 @@
-# Enterprise Reverse Proxy & API Gateway
-* Reverse proxy request forwarding
-* Dynamic routing
-* PostgreSQL request logging
-* Multiple backend support
-* Load balancing and failover
-* Redis-based caching
-* Rate limiting and security controls
-* SSL termination
-* Real-time monitoring dashboard
-* Production-ready architecture and deployment support
+# NovaGateway – Enterprise Reverse Proxy & API Gateway
 
-## Implementation Progress
+NovaGateway is a production-ready Reverse Proxy and API Gateway built with FastAPI and PostgreSQL. It sits between clients and backend services, intelligently routing HTTP traffic while providing monitoring, security, caching, load balancing, and operational features comparable to lightweight versions of Nginx or Traefik.
 
-### Step 1: Project Foundation
+## Key Features
 
-**What we built:**
-- Set up the core directory structure (`backend/app`).
-- Configured a base FastAPI application (`main.py`) with a `/health` endpoint.
-- Initialized configuration management using Pydantic Settings (`config.py` and `.env`).
-- Set up foundational requirements like CORS middleware and structured logging.
+- **Dynamic Routing & Reverse Proxy**: Forward HTTP requests to dynamic backend services with path matching, prefix stripping, and transparent header management.
+- **Load Balancing & Health Checks**: Supports Round-Robin and Weighted load balancing across multiple backends with automatic failover and asynchronous health checks.
+- **Security & Rate Limiting**: IP-based rate limiting (Redis sliding window), IP Allow/Block filtering, Request Size Limits, API Key authentication, and mandatory security headers.
+- **HTTPS & SSL Termination**: Secure client communication with built-in SSL termination, automatic HTTP-to-HTTPS redirection, and HSTS support.
+- **Observability**: Comprehensive asynchronous request logging to PostgreSQL (capturing latency, status, path, client IP, errors, etc.).
 
-**Why we built it:**
-- To establish a robust, scalable architecture for the Enterprise API Gateway.
-- To ensure proper environment variable management from the start, avoiding hardcoded secrets.
-- To have a functional "heartbeat" (`/health`) to verify the core server is operational before adding complex proxy logic.
+## System Architecture
 
-**What we tested:**
-- Ran the FastAPI server using Uvicorn.
-- Verified the `/health` endpoint returned a successful JSON response (`{"status": "ok", "version": "1.0.0"}`).
+```mermaid
+graph TD
+    Client["Client (Browser / API Consumer)"]
+    Gateway["NovaGateway (FastAPI)"]
+    Redis["Redis (Cache + Rate Limiting)"]
+    DB["PostgreSQL (Routes + Logs + Security)"]
+    B1["Backend Service A"]
+    B2["Backend Service B"]
+    B3["Backend Service N"]
 
-**The Result:**
-- A clean, running FastAPI shell capable of receiving HTTP requests on port 8000, serving as the bedrock for the reverse proxy.
+    Client -->|HTTPS Request| Gateway
+    Gateway -->|Check Rate Limit| Redis
+    Gateway -->|Cache Lookup| Redis
+    Gateway -->|Route Lookup| DB
+    Gateway -->|Log Request| DB
+    Gateway -->|Forward Request| B1
+    Gateway -->|Forward Request| B2
+    Gateway -->|Forward Request| B3
+```
 
-### Step 2: Basic Reverse Proxy
+## Tech Stack
 
-**What we built:**
-- Implemented `ProxyService` using `httpx.AsyncClient` with connection pooling to handle forwarding requests to a target backend.
-- Created a catch-all route (`/{path:path}`) in a new proxy router that intercepts any request not explicitly handled by the gateway.
-- Added logic to forward headers, query parameters, and request bodies while securely stripping hop-by-hop headers.
-- Automatically injected the `X-Forwarded-For` header with the client's IP address.
-- Implemented error handling to return JSON responses for `502 Bad Gateway` and `504 Gateway Timeout` errors.
+- **Framework**: FastAPI (Python)
+- **Database**: PostgreSQL (via asyncpg + SQLAlchemy)
+- **Caching/Rate Limiting**: Redis
+- **HTTP Client**: HTTPX (Async)
+- **Migrations**: Alembic
 
-**Why we built it:**
-- A reverse proxy needs to transparently sit between the client and the backend server. The catch-all route ensures all traffic is captured.
-- Hop-by-hop headers must be stripped to comply with HTTP proxy standards and prevent connection errors.
-- The `X-Forwarded-For` header is crucial for backend services to know the original IP address of the user.
+## Getting Started
 
-**What we tested:**
-- Started a dummy target server (Python's `http.server`) on port 8001.
-- Navigated to `http://localhost:8000/` and verified it perfectly mirrored the directory listing from port 8001.
-- Sent dynamic URL paths and query parameters (e.g., `/backend/requirements.txt?test=hello`) and confirmed the target server received and processed them exactly as requested.
-- Terminated the target server and verified the proxy gracefully returned a `502 Bad Gateway` JSON error.
+### Prerequisites
+- Python 3.10+
+- PostgreSQL
+- Redis
+- Docker (optional, for containerized deployment)
 
-**The Result:**
-- A fully functional proxy engine that accurately intercepts and routes traffic, preserves parameters, manages client IP headers, and safely handles connection failures.
+### Local Setup
 
-### Step 3: Request Logging & Persistence
+1. **Clone the repository and install dependencies:**
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-**What we built:**
-- Created a `RequestLog` SQLAlchemy model and corresponding Pydantic schemas.
-- Configured an Alembic migration for the `request_logs` PostgreSQL table.
-- Implemented a `RequestLoggingMiddleware` that captures latency, proxy status, path, method, client IP, and dynamically fetched target backend URLs and errors.
-- Added paginated API endpoints (`GET /admin/logs` and `GET /admin/logs/{id}`) with rich filtering capabilities.
-- Wired the middleware and logs router into the main FastAPI application.
+2. **Environment Variables:**
+   Create a `.env` file in the root directory based on `.env.example`:
+   ```env
+   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/novagateway
+   REDIS_URL=redis://localhost:6379/0
+   SECRET_KEY=supersecret
+   ALLOWED_HOSTS=*
+   RATE_LIMIT_REQUESTS=100
+   RATE_LIMIT_WINDOW=60
+   HEALTH_CHECK_INTERVAL=30
+   LOG_LEVEL=INFO
+   MAX_REQUEST_SIZE_MB=10
+   MAX_RETRIES=3
+   LOAD_BALANCER_STRATEGY=round_robin
+   ```
 
-**Why we built it:**
-- A robust API Gateway needs comprehensive observability. Writing logs to a database enables administrative review, monitoring, and future analytics features without blocking the hot path of proxy requests (via async background tasks).
+3. **Database Migrations:**
+   Ensure PostgreSQL is running locally and apply the Alembic migrations:
+   ```bash
+   alembic upgrade head
+   ```
 
-**What we tested:**
-- (Testing Steps)
-  1. Boot up the backend and PostgreSQL via docker-compose (to handle `asyncpg` bindings correctly).
-  2. Run `docker compose exec backend alembic upgrade head` to apply the migrations.
-  3. Send requests through the proxy (e.g., to the `/{path}` endpoint).
-  4. Perform `GET /admin/logs` to observe the captured request metadata (method, latency, error strings on failure).
+4. **SSL Setup (Optional but recommended):**
+   Generate self-signed certificates for development to test SSL termination:
+   ```bash
+   mkdir certs
+   cd certs
+   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "//CN=localhost"
+   ```
+   Add to `.env`:
+   ```env
+   SSL_CERTFILE=../certs/cert.pem
+   SSL_KEYFILE=../certs/key.pem
+   HTTPS_PORT=443
+   HTTP_REDIRECT_PORT=80
+   ```
 
-**The Result:**
-- Every proxied request generates an asynchronous database record containing full observability metadata (latency, success/fail state, size) securely exposed via an admin API.
+5. **Run the Gateway:**
+   ```bash
+   python run.py
+   ```
+   *Note: If SSL is configured, this will automatically start an HTTPS server on `HTTPS_PORT` and an HTTP redirect server on `HTTP_REDIRECT_PORT`.*
+
+### Docker Deployment
+
+To run the entire stack (Gateway, PostgreSQL, Redis) via Docker Compose:
+```bash
+docker-compose up -d --build
+```
+*Ensure you have generated the `certs/` folder in the root directory if you want SSL termination enabled in Docker.*
+
+## Core Configuration & API Surface
+
+### 1. Proxy Engine
+The gateway exposes a catch-all route `/{path:path}` that intercepts traffic, resolves the appropriate backend using the requested path, applies security/rate-limiting middlewares, and forwards the request via an asynchronous `httpx` connection pool. It manages hop-by-hop headers, `X-Forwarded-For` injection, and handles connection failures gracefully.
+
+### 2. Admin API
+NovaGateway provides a set of REST endpoints to manage configuration dynamically without restarting the server:
+
+**Routes & Backends:**
+- `GET /admin/routes` - List all routes
+- `POST /admin/routes` - Create a route
+- `GET /admin/backends` - List backends
+- `POST /admin/backends` - Add a backend to a route
+
+**Security:**
+- `POST /admin/security/api-keys` - Issue new API Keys
+- `POST /admin/security/ip-rules` - Add IP Allow/Block rules
+
+**Observability:**
+- `GET /admin/logs` - Retrieve paginated request logs with filters (e.g., latency, status codes).
+
+### 3. Load Balancing Strategies
+Configurable via `LOAD_BALANCER_STRATEGY`:
+- **Round Robin (`round_robin`)**: Distributes requests evenly across all healthy backends.
+- **Weighted Round Robin (`weighted`)**: Distributes requests proportionally based on backend weight settings.
+
+Health checks run asynchronously every `HEALTH_CHECK_INTERVAL` seconds to automatically ping each backend and temporarily remove failing instances from the active rotation.
+
+### 4. Security Measures
+- **Rate Limiting**: Configured globally per IP using Redis.
+- **Security Headers**: HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, etc.
+- **Cookies**: Automatically injects `Secure` and `SameSite=Strict` flags to proxied `Set-Cookie` headers when in HTTPS mode.

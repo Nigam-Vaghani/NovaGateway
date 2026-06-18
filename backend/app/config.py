@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -14,6 +15,15 @@ class Settings(BaseSettings):
     MAX_REQUEST_SIZE_MB: int = 10
     MAX_RETRIES: int = 3
     LOAD_BALANCER_STRATEGY: str = "round_robin"
+
+    SSL_CERTFILE: Optional[str] = None
+    SSL_KEYFILE: Optional[str] = None
+    HTTP_REDIRECT_PORT: int = 80
+    HTTPS_PORT: int = 443
+
+    @property
+    def is_https_active(self) -> bool:
+        return bool(self.SSL_CERTFILE and self.SSL_KEYFILE)
 
     model_config = SettingsConfigDict(env_file="../.env", env_file_encoding="utf-8", extra="ignore")
 

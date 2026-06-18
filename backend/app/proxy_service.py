@@ -106,16 +106,22 @@ class ProxyService:
                 )
                 response = await self.client.send(req)
                 
-                res_headers = {}
-                for key, value in response.headers.items():
+                res_headers = []
+                for key, value in response.headers.multi_items():
                     if key.lower() not in HOP_BY_HOP_HEADERS and key.lower() not in ["content-length", "content-encoding"]:
-                        res_headers[key] = value
+                        if key.lower() == "set-cookie" and settings.is_https_active:
+                            if "Secure" not in value:
+                                value += "; Secure"
+                            if "SameSite=Strict" not in value and "SameSite" not in value:
+                                value += "; SameSite=Strict"
+                        res_headers.append((key, value))
                         
-                return Response(
+                proxy_response = Response(
                     content=response.content,
-                    status_code=response.status_code,
-                    headers=res_headers
+                    status_code=response.status_code
                 )
+                proxy_response.raw_headers.extend([(k.encode("latin-1"), v.encode("latin-1")) for k, v in res_headers])
+                return proxy_response
                 
             except httpx.ConnectError as e:
                 logger.error(f"Connection error to backend {target_url}: {e}")
