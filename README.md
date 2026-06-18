@@ -1,180 +1,106 @@
-# NovaGateway – Enterprise Reverse Proxy & API Gateway
+<div align="center">
 
-NovaGateway is a production-ready Reverse Proxy and API Gateway built with FastAPI and PostgreSQL. It sits between clients and backend services, intelligently routing HTTP traffic while providing monitoring, security, caching, load balancing, and operational features comparable to lightweight versions of Nginx or Traefik.
+# 🚀 NovaGateway
+### *An Enterprise-Grade, High-Performance Reverse Proxy & API Gateway*
 
-## Key Features
+<br />
 
-- **Dynamic Routing & Reverse Proxy**: Forward HTTP requests to dynamic backend services with path matching, prefix stripping, and transparent header management.
-- **Load Balancing & Health Checks**: Supports Round-Robin and Weighted load balancing across multiple backends with automatic failover and asynchronous health checks.
-- **Security & Rate Limiting**: IP-based rate limiting (Redis sliding window), IP Allow/Block filtering, Request Size Limits, API Key authentication, and mandatory security headers.
-- **HTTPS & SSL Termination**: Secure client communication with built-in SSL termination, automatic HTTP-to-HTTPS redirection, and HSTS support.
-- **Observability**: Comprehensive asynchronous request logging to PostgreSQL (capturing latency, status, path, client IP, errors, etc.).
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-## System Architecture
+**NovaGateway** is a dynamic, asynchronous API Gateway and Reverse Proxy built to handle modern microservice architectures. Designed from the ground up for speed, observability, and dynamic configuration, NovaGateway manages routing, load balancing, caching, security, and detailed request telemetry seamlessly.
 
-```mermaid
-graph TD
-    Client["Client (Browser / API Consumer)"]
-    Gateway["NovaGateway (FastAPI)"]
-    Redis["Redis (Cache + Rate Limiting)"]
-    DB["PostgreSQL (Routes + Logs + Security)"]
-    B1["Backend Service A"]
-    B2["Backend Service B"]
-    B3["Backend Service N"]
+---
 
-    Client -->|HTTPS Request| Gateway
-    Gateway -->|Check Rate Limit| Redis
-    Gateway -->|Cache Lookup| Redis
-    Gateway -->|Route Lookup| DB
-    Gateway -->|Log Request| DB
-    Gateway -->|Forward Request| B1
-    Gateway -->|Forward Request| B2
-    Gateway -->|Forward Request| B3
-```
+</div>
 
-## Tech Stack
+## ✨ Key Features
 
-- **Framework**: FastAPI (Python)
-- **Database**: PostgreSQL (via asyncpg + SQLAlchemy)
-- **Caching/Rate Limiting**: Redis
-- **HTTP Client**: HTTPX (Async)
-- **Migrations**: Alembic
+- 🚦 **Dynamic Routing Engine**: Database-driven routing allowing you to configure and update endpoints on the fly without restarting the gateway.
+- ⚖️ **Intelligent Load Balancing**: Supports multiple strategies including `Round-Robin` and `Weighted Round-Robin`, distributing traffic evenly across backend nodes.
+- 🩺 **Active Health Checks**: A background monitoring loop actively checks backend health and performs automatic failovers to prevent downtime.
+- 🛡️ **Robust Security**: Redis-backed Sliding-Window Rate Limiting, IP filtering, request size limits, and configurable API Key authentication.
+- ⚡ **High-Performance Caching**: Instantaneous response times for static or slow `GET` endpoints via Redis caching.
+- 📊 **Real-time Observability**: Structured JSON logging intercepts and records request latencies, methods, and paths.
+- 🖥️ **Futuristic Admin Dashboard**: A beautifully designed React frontend featuring a glassmorphic UI to visualize metrics and manage configurations effortlessly.
 
-## Getting Started
+---
+
+## 📸 Application Showcase
+
+### 1. 📊 Telemetry Overview (Dashboard)
+The dashboard provides a real-time matrix of all traffic passing through the gateway. You can monitor the total requests over 24 hours, track average latencies, visualize traffic spikes via the line charts, and check the active status of all backend nodes.
+![Dashboard Showcase](docs/images/dashboard.png)
+
+### 2. 🛣️ Dynamic Routes Management
+Easily create, update, and manage your API routes. The gateway intelligently forwards traffic matched by path prefixes to registered downstream backends.
+![Routes Management](docs/images/routes.png)
+
+### 3. 🖥️ Load Balancing & Backends
+Add multiple backend instances (URLs) to a single route and assign them specific traffic weights. The gateway actively monitors these nodes and routes requests accordingly.
+![Backends Management](docs/images/backends.png)
+
+### 4. 📝 Granular Request Logging
+Every request that flows through the proxy is intercepted, measured, and securely logged to the PostgreSQL database for deep auditing and troubleshooting.
+![Request Logs](docs/images/logs.png)
+
+### 5. 🛡️ Global Security Configurations
+Define global gateway policies. Update allowed IP addresses, configure maximum request sizes, and dictate the strictness of your rate limiting algorithms.
+![Security Settings](docs/images/security.png)
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10+
-- PostgreSQL
-- Redis
-- Docker (optional, for containerized deployment)
+- Docker and Docker Compose
+- Node.js (for local frontend development)
+- Python 3.10+ (for local backend development)
 
-### Local Setup
-
-1. **Clone the repository and install dependencies:**
+### Quick Start (Production Setup)
+1. **Clone the repository**
    ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
+   git clone https://github.com/Nigam-Vaghani/NovaGateway.git
+   cd NovaGateway
    ```
 
-2. **Environment Variables:**
-   Create a `.env` file in the root directory based on `.env.example`:
-   ```env
-   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/novagateway
-   REDIS_URL=redis://localhost:6379/0
-   SECRET_KEY=supersecret
-   ALLOWED_HOSTS=*
-   RATE_LIMIT_REQUESTS=100
-   RATE_LIMIT_WINDOW=60
-   HEALTH_CHECK_INTERVAL=30
-   LOG_LEVEL=INFO
-   MAX_REQUEST_SIZE_MB=10
-   MAX_RETRIES=3
-   LOAD_BALANCER_STRATEGY=round_robin
-   ```
-
-3. **Database Migrations:**
-   Ensure PostgreSQL is running locally and apply the Alembic migrations:
+2. **Start the Stack**
+   NovaGateway is fully containerized. A single command brings up the Gateway, Database, Cache, and UI.
    ```bash
-   alembic upgrade head
+   make dev
    ```
-
-4. **SSL Setup (Optional but recommended):**
-   Generate self-signed certificates for development to test SSL termination:
+   *or manually using docker-compose:*
    ```bash
-   mkdir certs
-   cd certs
-   openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "//CN=localhost"
-   ```
-   Add to `.env`:
-   ```env
-   SSL_CERTFILE=../certs/cert.pem
-   SSL_KEYFILE=../certs/key.pem
-   HTTPS_PORT=443
-   HTTP_REDIRECT_PORT=80
+   docker-compose up -d --build
    ```
 
-5. **Run the Gateway:**
+3. **Run Database Migrations**
    ```bash
-   python run.py
+   make migrate
    ```
-   *Note: If SSL is configured, this will automatically start an HTTPS server on `HTTPS_PORT` and an HTTP redirect server on `HTTP_REDIRECT_PORT`.*
 
-### Docker Deployment
+4. **Access the Gateway**
+   - Proxy Traffic Port: `http://localhost:8000`
+   - Admin UI Dashboard: `http://localhost:3000`
 
-To run the entire stack (Gateway, PostgreSQL, Redis) via Docker Compose:
-```bash
-docker-compose up -d --build
-```
-*Ensure you have generated the `certs/` folder in the root directory if you want SSL termination enabled in Docker.*
+---
 
-## Core Configuration & API Surface
+## 🏗️ Architecture Stack
 
-### 1. Proxy Engine
-The gateway exposes a catch-all route `/{path:path}` that intercepts traffic, resolves the appropriate backend using the requested path, applies security/rate-limiting middlewares, and forwards the request via an asynchronous `httpx` connection pool. It manages hop-by-hop headers, `X-Forwarded-For` injection, and handles connection failures gracefully.
+- **Backend / Proxy Engine:** Python, FastAPI, HTTPX, SQLAlchemy, Uvicorn
+- **Database:** PostgreSQL (managed asynchronously via `asyncpg`)
+- **Cache & Rate Limiting:** Redis
+- **Frontend / Admin UI:** React (Vite), TypeScript, TailwindCSS v4, Recharts, React Query
+- **Deployment:** Docker, Docker Compose, Makefile automation
 
-### 2. Admin API
-NovaGateway provides a set of REST endpoints to manage configuration dynamically without restarting the server:
+---
 
-**Routes & Backends:**
-- `GET /admin/routes` - List all routes
-- `POST /admin/routes` - Create a route
-- `GET /admin/backends` - List backends
-- `POST /admin/backends` - Add a backend to a route
+## 👤 Author
 
-**Security:**
-- `POST /admin/security/api-keys` - Issue new API Keys
-- `POST /admin/security/ip-rules` - Add IP Allow/Block rules
-
-**Observability:**
-- `GET /admin/logs` - Retrieve paginated request logs with filters (e.g., latency, status codes).
-
-### 3. Load Balancing Strategies
-Configurable via `LOAD_BALANCER_STRATEGY`:
-- **Round Robin (`round_robin`)**: Distributes requests evenly across all healthy backends.
-- **Weighted Round Robin (`weighted`)**: Distributes requests proportionally based on backend weight settings.
-
-Health checks run asynchronously every `HEALTH_CHECK_INTERVAL` seconds to automatically ping each backend and temporarily remove failing instances from the active rotation.
-
-### 4. Security Measures
-- **Rate Limiting**: Configured globally per IP using Redis.
-- **Security Headers**: HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, etc.
-- **Cookies**: Automatically injects `Secure` and `SameSite=Strict` flags to proxied `Set-Cookie` headers when in HTTPS mode.
-
-## CI/CD Pipeline
-
-The project includes a `Makefile` to simplify CI/CD tasks, which are compatible with GitHub Actions or other CI runners.
-
-### Useful Commands
-- `make dev` - Start development environment using Docker Compose.
-- `make prod` - Start production environment using `docker-compose.prod.yml`.
-- `make test` - Run the test suite with `pytest`.
-- `make lint` - Run code linting with `ruff`.
-- `make migrate` - Apply Alembic migrations.
-- `make down` - Tear down Docker containers.
-
-### Example GitHub Actions Workflow
-
-```yaml
-name: CI
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install dependencies
-        run: |
-          cd backend
-          pip install -r requirements.txt
-      - name: Lint
-        run: make lint
-      - name: Test
-        run: make test
-```
+**Nigam Vaghani**
+- GitHub: [@Nigam-Vaghani](https://github.com/Nigam-Vaghani)
